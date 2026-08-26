@@ -1,0 +1,44 @@
+@media(max-width:720px){.topbar{padding:0 15px}.project-switch span{display:none}.page{padding:22px 15px}.pagehead{flex-direction:column}.metrics{grid-template-columns:1fr 1fr}.grid2,.project-grid{grid-template-columns:1fr}.ks-item{grid-template-columns:28px 1fr auto}.ks-item em{display:none}.calc-row{grid-template-columns:1.6fr .7fr .8fr 30px}.calc-row>*:nth-child(3),.calc-row>*:nth-child(4){display:none}.gallery{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}}
+
+
+/* Fremlæggelse */
+.presentation-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:18px;align-items:start}
+.slide-nav{display:grid;gap:7px;position:sticky;top:94px}
+.slide-nav button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px;text-align:left;display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;color:var(--text)}
+.slide-nav button small{color:var(--muted);font-weight:800}.slide-nav button span{font-weight:700;font-size:12px;line-height:1.3}
+.slide-nav button.active{border-color:#8bb29a;background:#f5faf7;box-shadow:inset 3px 0 var(--green)}
+.slide-preview{aspect-ratio:16/9;background:linear-gradient(135deg,#111820,#202b35);color:#fff;border-radius:14px;padding:42px 48px;position:relative;overflow:hidden;box-shadow:0 15px 40px rgba(15,23,42,.12)}
+.slide-preview:after,.present-stage:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(88,151,113,.12);right:-120px;top:-120px}
+.slide-kicker{font-size:11px;letter-spacing:1.8px;font-weight:850;color:#8fbea1;margin-bottom:14px}
+.slide-preview h2,.present-stage h2{font-size:34px;line-height:1.06;margin:0 0 8px;max-width:850px}
+.slide-sub{color:#aebac5;font-size:15px;margin:0 0 28px}
+.slide-content{position:relative;z-index:1}
+.slide-footer{position:absolute;left:48px;right:48px;bottom:24px;border-top:1px solid rgba(255,255,255,.16);padding-top:11px;display:flex;justify-content:space-between;color:#8e9aa6;font-size:11px}
+.slide-footer b{color:#fff}
+.present-hero{display:grid;grid-template-columns:1fr 120px;align-items:center;min-height:220px}
+.present-hero h3{font-size:22px;margin:14px 0 8px}.present-hero p{color:#b9c3cc;max-width:600px;line-height:1.55}
+.present-pill{display:inline-block;background:rgba(89,151,113,.18);border:1px solid rgba(125,188,150,.28);color:#a9d6ba;border-radius:20px;padding:7px 11px;font-weight:800;font-size:11px}
+.present-number{font-size:78px;font-weight:900;color:rgba(255,255,255,.08)}
+.present-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 20px}
+.present-metrics>div,.ks-phase-cards>div,.reflection-grid>div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:16px}
+.present-metrics span{display:block;color:#aebac5;font-size:11px}.present-metrics strong{display:block;font-size:22px;margin-top:5px}
+.present-list{display:grid;grid-template-columns:repeat(2,1fr);gap:7px 18px}.present-list>b{grid-column:1/-1;margin-bottom:2px}.present-list span{color:#d7dfe5}.present-list small{color:#84909b}
+.process-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}.process-flow div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;min-height:88px}.process-flow b{display:block;color:#8fbea1;font-size:20px;margin-bottom:7px}.process-flow span{font-weight:750}
+.ks-phase-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.ks-phase-cards b,.ks-phase-cards span{display:block}.ks-phase-cards span{color:#aebac5;margin-top:6px;line-height:1.4}
+.present-price{max-width:720px}.present-price>div{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.13)}.present-price span{color:#b3bdc6}.present-price .grand{border:0;margin-top:7px;padding:16px;background:rgba(89,151,113,.14);border-radius:10px}.present-price .grand strong{font-size:25px;color:#a9d6ba}
+.reflection-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.reflection-grid b{display:block;margin-bottom:9px}.reflection-grid span{display:block;color:#c2ccd4;padding:4px 0}
+.speaker-notes{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px}.speaker-notes>div{display:flex;justify-content:space-between;margin-bottom:9px}.speaker-notes span{color:var(--muted);font-size:11px}.speaker-notes textarea{width:100%;min-height:125px;border:1px solid var(--line);border-radius:8px;padding:11px;resize:vertical;line-height:1.5}
+.present-overlay{position:fixed;inset:0;background:#05080c;z-index:100;display:flex;flex-direction:column;padding:3vh 4vw;color:#fff}
+.present-stage{position:relative;flex:1;width:min(1500px,92vw);aspect-ratio:16/9;max-height:82vh;margin:auto;background:linear-gradient(135deg,#111820,#202b35);border:1px solid #2c3946;border-radius:14px;padding:5vh 5vw;overflow:hidden}
+.present-close{position:absolute;right:22px;top:15px;z-index:3;border:0;background:rgba(255,255,255,.08);color:#fff;width:38px;height:38px;border-radius:50%;font-size:22px}
+.present-controls{display:flex;justify-content:center;gap:18px;align-items:center;padding-top:14px}.present-controls button{border:1px solid #364451;background:#17212b;color:#fff;border-radius:8px;padding:9px 14px}.present-controls span{color:#8f9ca8}
+@media(max-width:850px){.presentation-layout{grid-template-columns:1fr}.slide-nav{position:static;grid-template-columns:repeat(3,1fr)}.slide-preview{padding:28px}.slide-preview h2{font-size:26px}.slide-footer{left:28px;right:28px}.process-flow{grid-template-columns:repeat(2,1fr)}.present-metrics,.ks-phase-cards{grid-template-columns:1fr 1fr}.reflection-grid{grid-template-columns:1fr}}
+
+
+/* V7 H3 presentation */
+.presentation-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+.presentation-summary>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.presentation-summary span{display:block;color:var(--muted);font-size:11px}.presentation-summary b{display:block;margin-top:3px;font-size:15px}
+.slide-nav button span{display:block}.slide-nav button em{display:block;color:var(--muted);font-style:normal;font-size:10px;margin-top:4px}
+.slide-time-badge{position:absolute;right:48px;top:38px;border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:6px 10px;color:#a9d6ba;font-weight:800;font-size:11px;z-index:2}
+.requirement-grid,.material-choice-grid,.detail-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:12px}
