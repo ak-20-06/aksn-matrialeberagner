@@ -1,0 +1,17 @@
+name: Supabase health check
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+    - cron: "17 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read public health row
+        run: |
+          curl --fail --silent --show-error \
+            "https://ujctclyoksepkhujchqa.supabase.co/rest/v1/app_health?select=id,label&id=eq.1" \
+            -H "apikey: sb_publishable_n5pgOzzTw5-ORur1HkwAPg_IPms5Ksv"
