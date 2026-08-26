@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Project – Byg & dokumentation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandmark">◆</div>
+      <div><strong>PROJECT</strong><small>BYG & DOKUMENTATION</small></div>
+    </div>
+    <nav id="main-nav">
+      <button class="nav active" data-page="dashboard"><span>▦</span><b>Dashboard</b></button>
+      <button class="nav" data-page="projects"><span>▣</span><b>Sager</b></button>
+      <button class="nav" data-page="calc"><span>∑</span><b>Kalkulation</b></button>
+      <button class="nav" data-page="schedule"><span>▥</span><b>Tidsplan</b></button>
+      <button class="nav" data-page="ks"><span>✓</span><b>KS & dokumentation</b><i id="nav-ks-count">0</i></button>
+      <button class="nav" data-page="hours"><span>◷</span><b>Timer</b></button>
+      <button class="nav" data-page="customers"><span>♙</span><b>Kunder</b></button>
+      <button class="nav" data-page="materials"><span>▤</span><b>Materialer</b></button>
+      <button class="nav" data-page="presentation"><span>▶</span><b>Fremlæggelse</b></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="nav" data-page="settings"><span>⚙</span><b>Indstillinger</b></button>
+      <div class="user">
+        <div class="avatar">AK</div>
+        <div><strong>Asger</strong><small>Administrator</small></div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">AKTIV SAG</div>
+        <div class="project-switch">
+          <select id="active-project-select"></select>
+          <span id="active-project-meta"></span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span id="cloud-status" class="cloud-status local" title="Supabase status">● Lokal</span>
+        <span id="active-project-status" class="status"></span>
+        <button class="iconbtn" id="quick-save" title="Gem lokalt og i skyen">💾</button>
+      </div>
+    </header>
+
+    <section class="page active" id="dashboard-page"></section>
+    <section class="page" id="projects-page"></section>
+    <section class="page" id="calc-page"></section>
+    <section class="page" id="schedule-page"></section>
+    <section class="page" id="ks-page"></section>
+    <section class="page" id="hours-page"></section>
+    <section class="page" id="customers-page"></section>
+    <section class="page" id="materials-page"></section>
+    <section class="page" id="presentation-page"></section>
+    <section class="page" id="settings-page"></section>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-1.js"></script>
+<script src="app-2.js"></script>
+<script src="app-3.js"></script>
+<script src="app-4.js"></script>
+</body>
+</html>
