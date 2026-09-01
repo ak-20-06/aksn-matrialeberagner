@@ -1,13 +1,114 @@
 let state=(()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||freshState()}catch{return freshState()}})();
-let sb=null,cloudUser=null,cloudTimer=null,cloudBusy=false;
-function saveState(show=true){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));queueCloud();if(show)toast(cloudUser?'Gemt · synkroniserer':'Gemt lokalt')}
+let sb=null,cloudUser=null,cloudTimer=null,cloudBusy=false,cloudDirty=false,cloudRetryTimer=null;
+
+function saveState(show=true){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  cloudDirty=true;
+  queueCloud();
+  if(show)toast(cloudUser?'Gemt · autosynkroniserer':'Gemt lokalt');
+}
 function cfg(){return window.APP_CONFIG||{}}
 function configured(){return !!(cfg().SUPABASE_URL&&cfg().SUPABASE_PUBLISHABLE_KEY)}
 function setCloud(kind,text){const e=document.getElementById('cloud-status');if(e){e.className='cloud-status '+kind;e.textContent='● '+text}}
-async function initCloud(){if(!configured()||!window.supabase){setCloud('local','Lokal');return}sb=window.supabase.createClient(cfg().SUPABASE_URL,cfg().SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});sb.auth.onAuthStateChange((_,s)=>{cloudUser=s?.user||null;setTimeout(async()=>{if(cloudUser)await pullCloud(true);else setCloud('ready','Supabase klar');renderSettings?.()},0)});const {data}=await sb.auth.getSession();cloudUser=data?.session?.user||null;if(cloudUser)await pullCloud(true);else setCloud('ready','Supabase klar')}
-function queueCloud(){if(!sb||!cloudUser||cloudBusy)return;clearTimeout(cloudTimer);setCloud('sync','Synkroniserer');cloudTimer=setTimeout(()=>pushCloud(false),650)}
-async function pushCloud(show=true){if(!sb||!cloudUser)return;cloudBusy=true;setCloud('sync','Gemmer');try{const {error}=await sb.from('app_state').upsert({user_id:cloudUser.id,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;setCloud('online','Online');if(show)toast('Synkroniseret med Supabase')}catch(e){console.error(e);setCloud('error','Sync fejl');if(show)toast('Cloud-gemning fejlede')}finally{cloudBusy=false}}
-async function pullCloud(silent=false){if(!sb||!cloudUser)return;cloudBusy=true;setCloud('sync','Henter');try{const {data,error}=await sb.from('app_state').select('data').eq('user_id',cloudUser.id).maybeSingle();if(error)throw error;if(data?.data){state=data.data;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));renderAll();setCloud('online','Online')}else await pushCloud(false);if(!silent)toast('Cloud-data hentet')}catch(e){console.error(e);setCloud('error','Sync fejl')}finally{cloudBusy=false}}
-async function cloudLogin(){if(!sb)return toast('Supabase ikke klar');const email=document.getElementById('cloud-email')?.value.trim(),password=document.getElementById('cloud-password')?.value||'';if(!email||!password)return toast('Skriv e-mail og adgangskode');const {error}=await sb.auth.signInWithPassword({email,password});if(error)toast(error.message);else toast('Logget ind')}
-async function cloudRegister(){if(!sb)return toast('Supabase ikke klar');const email=document.getElementById('cloud-email')?.value.trim(),password=document.getElementById('cloud-password')?.value||'';if(!email||password.length<6)return toast('Brug e-mail og mindst 6 tegn');const {data,error}=await sb.auth.signUp({email,password});if(error)toast(error.message);else toast(data?.session?'Bruger oprettet':'Bruger oprettet · bekræft e-mailen')}
-async function cloudLogout(){if(sb)await sb.auth.signOut();cloudUser=null;setCloud('ready','Supabase klar');renderSettings();toast('Logget ud')}
+
+async function initCloud(){
+  if(!configured()||!window.supabase){setCloud('local','Lokal');return}
+  sb=window.supabase.createClient(cfg().SUPABASE_URL,cfg().SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+  sb.auth.onAuthStateChange((_,s)=>{
+    cloudUser=s?.user||null;
+    setTimeout(async()=>{
+      if(cloudUser)await pullCloud(true);
+      else setCloud('ready','Supabase klar');
+      renderSettings?.();
+    },0)
+  });
+  const {data,error}=await sb.auth.getSession();
+  if(error){console.error(error);setCloud('error','Supabase fejl');return}
+  cloudUser=data?.session?.user||null;
+  if(cloudUser)await pullCloud(true);else setCloud('ready','Supabase klar');
+
+  window.addEventListener('online',()=>{if(cloudUser&&cloudDirty)queueCloud(100)});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&cloudUser&&cloudDirty)pushCloud(false)});
+  setInterval(()=>{if(cloudUser&&cloudDirty&&!cloudBusy)queueCloud(50)},30000);
+}
+
+function queueCloud(delay=450){
+  if(!sb||!cloudUser)return;
+  clearTimeout(cloudTimer);
+  setCloud('sync','Autosynk');
+  cloudTimer=setTimeout(()=>pushCloud(false),delay);
+}
+
+async function pushCloud(show=true){
+  if(!sb||!cloudUser)return;
+  if(cloudBusy){cloudDirty=true;return}
+  cloudBusy=true;
+  clearTimeout(cloudRetryTimer);
+  const snapshot=JSON.stringify(state);
+  setCloud('sync','Gemmer automatisk');
+  try{
+    const {error}=await sb.from('app_state').upsert({user_id:cloudUser.id,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(error)throw error;
+    cloudDirty=JSON.stringify(state)!==snapshot;
+    setCloud('online',cloudDirty?'Autosynk venter':'Online · autosynk');
+    if(show)toast('Synkroniseret med Supabase');
+  }catch(e){
+    console.error(e);
+    cloudDirty=true;
+    setCloud('error','Sync fejl · prøver igen');
+    cloudRetryTimer=setTimeout(()=>queueCloud(50),5000);
+    if(show)toast('Cloud-gemning fejlede');
+  }finally{
+    cloudBusy=false;
+    if(cloudDirty&&cloudUser)queueCloud(250);
+  }
+}
+
+async function pullCloud(silent=false){
+  if(!sb||!cloudUser)return;
+  if(cloudBusy)return;
+  cloudBusy=true;
+  setCloud('sync','Henter');
+  try{
+    const {data,error}=await sb.from('app_state').select('data').eq('user_id',cloudUser.id).maybeSingle();
+    if(error)throw error;
+    if(data?.data){
+      state=data.data;
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+      cloudDirty=false;
+      renderAll();
+      setCloud('online','Online · autosynk');
+    }else{
+      cloudDirty=true;
+    }
+    if(!silent)toast('Cloud-data hentet');
+  }catch(e){
+    console.error(e);
+    setCloud('error','Sync fejl');
+  }finally{
+    cloudBusy=false;
+    if(cloudDirty&&cloudUser)queueCloud(100);
+  }
+}
+
+async function cloudLogin(){
+  if(!sb)return toast('Supabase ikke klar');
+  const email=document.getElementById('cloud-email')?.value.trim(),password=document.getElementById('cloud-password')?.value||'';
+  if(!email||!password)return toast('Skriv e-mail og adgangskode');
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error)toast(error.message);else toast('Logget ind · autosynk aktiv');
+}
+async function cloudRegister(){
+  if(!sb)return toast('Supabase ikke klar');
+  const email=document.getElementById('cloud-email')?.value.trim(),password=document.getElementById('cloud-password')?.value||'';
+  if(!email||password.length<6)return toast('Brug e-mail og mindst 6 tegn');
+  const {data,error}=await sb.auth.signUp({email,password});
+  if(error)toast(error.message);else toast(data?.session?'Bruger oprettet · autosynk aktiv':'Bruger oprettet · bekræft e-mailen');
+}
+async function cloudLogout(){
+  if(sb)await sb.auth.signOut();
+  cloudUser=null;cloudDirty=false;
+  setCloud('ready','Supabase klar');
+  renderSettings();
+  toast('Logget ud');
+}
