@@ -12,30 +12,30 @@ function configured(){return !!(cfg().SUPABASE_URL&&cfg().SUPABASE_PUBLISHABLE_K
 function setCloud(kind,text){const e=document.getElementById('cloud-status');if(e){e.className='cloud-status '+kind;e.textContent='● '+text}}
 
 async function initCloud(){
-  if(!configured()||!window.supabase){setCloud('local','Lokal');showAuthGate?.('Supabase-forbindelsen mangler. Kontakt administrator.');return}
+  if(!configured()||!window.supabase){setCloud('local','Lokal');window.showAuthGate?.('Supabase-forbindelsen mangler. Kontakt administrator.');return}
   sb=window.supabase.createClient(cfg().SUPABASE_URL,cfg().SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
   sb.auth.onAuthStateChange((_,s)=>{
     cloudUser=s?.user||null;
     setTimeout(async()=>{
       if(cloudUser){
-        hideAuthGate?.();
+        window.hideAuthGate?.();
         await pullCloud(true);
       }else{
         setCloud('ready','Login kræves');
-        showAuthGate?.();
+        window.showAuthGate?.();
       }
       renderSettings?.();
     },0)
   });
   const {data,error}=await sb.auth.getSession();
-  if(error){console.error(error);setCloud('error','Supabase fejl');showAuthGate?.('Der opstod en fejl ved forbindelsen til Supabase.');return}
+  if(error){console.error(error);setCloud('error','Supabase fejl');window.showAuthGate?.('Der opstod en fejl ved forbindelsen til Supabase.');return}
   cloudUser=data?.session?.user||null;
   if(cloudUser){
-    hideAuthGate?.();
+    window.hideAuthGate?.();
     await pullCloud(true);
   }else{
     setCloud('ready','Login kræves');
-    showAuthGate?.();
+    window.showAuthGate?.();
   }
 
   window.addEventListener('online',()=>{if(cloudUser&&cloudDirty)queueCloud(100)});
@@ -120,7 +120,7 @@ async function cloudLogout(){
   if(sb)await sb.auth.signOut();
   cloudUser=null;cloudDirty=false;
   setCloud('ready','Login kræves');
-  showAuthGate?.();
+  window.showAuthGate?.();
   renderSettings();
   toast('Logget ud');
 }
