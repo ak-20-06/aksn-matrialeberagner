@@ -96,12 +96,90 @@ function deleteKsPhoto(){
   if(k.photos.length){ksViewerPhotoIndex=Math.min(ksViewerPhotoIndex,k.photos.length-1);renderKsViewer()}else closeKsViewer();
 }
 
+/* Professionel oprettelse og redigering af sager */
+const CASE_TYPES=['Tag / kvist','Renovering','Nybyggeri','Tilbygning','Facade','Vinduer / døre','Service / reparation','Forsikringssag','Andet'];
+const CASE_STATUSES=['Tilbud','Planlagt','I gang','Afventer','Afsluttet'];
+function nextCaseNumber(){return `SAG-${new Date().getFullYear()}-${String(state.projects.length+1).padStart(3,'0')}`}
+function projectAddress(p){return [p.address,p.postalCode,p.city].filter(Boolean).join(', ')}
+
+function openProjectForm(projectId=null){
+  const editing=!!projectId;
+  const p=editing?state.projects.find(x=>x.id===projectId):null;
+  const customer=p?.customerId?state.customers.find(c=>c.id===p.customerId):null;
+  const v=(x='')=>h(x??'');
+  const root=document.getElementById('modal-root');
+  root.innerHTML=`<div class="case-modal" onclick="if(event.target===this)closeProjectForm()">
+    <form class="case-form" onsubmit="saveProjectForm(event,'${projectId||''}')">
+      <div class="case-form-head"><div><small>${editing?'REDIGER SAG':'NY SAG'}</small><h2>${editing?'Sagsoplysninger':'Opret ny sag'}</h2><p>Gem de vigtigste oplysninger om opgaven, kunden og adressen.</p></div><button type="button" class="case-close" onclick="closeProjectForm()">×</button></div>
+      <div class="case-form-body">
+        <section><h3>Sagen</h3><div class="case-grid two">
+          <label>Sagsnavn *<input id="case-name" required value="${v(p?.name)}" placeholder="Fx Kvist – Søndergade 12"></label>
+          <label>Sagsnummer<input id="case-number" value="${v(p?.number||nextCaseNumber())}" placeholder="SAG-2026-001"></label>
+          <label>Sagstype<select id="case-type">${CASE_TYPES.map(x=>`<option ${x===(p?.caseType||'Tag / kvist')?'selected':''}>${x}</option>`).join('')}</select></label>
+          <label>Status<select id="case-status">${CASE_STATUSES.map(x=>`<option ${x===(p?.status||'Tilbud')?'selected':''}>${x}</option>`).join('')}</select></label>
+          <label>Startdato<input id="case-start" type="date" value="${v(p?.start||new Date().toISOString().slice(0,10))}"></label>
+          <label>Kort beskrivelse<input id="case-description" value="${v(p?.description)}" placeholder="Fx Pladsbygget rytterkvist"></label>
+        </div></section>
+        <section><h3>Adresse</h3><div class="case-grid address">
+          <label class="wide">Adresse<input id="case-address" value="${v(p?.address)}" placeholder="Gade og husnummer"></label>
+          <label>Postnr.<input id="case-postal" inputmode="numeric" value="${v(p?.postalCode)}" placeholder="7100"></label>
+          <label>By<input id="case-city" value="${v(p?.city)}" placeholder="Vejle"></label>
+        </div></section>
+        <section><h3>Kunde & kontakt</h3><div class="case-grid two">
+          <label>Kunde / virksomhed<input id="case-customer" value="${v(customer?.name||p?.customerName)}" placeholder="Navn eller virksomhed"></label>
+          <label>Kontaktperson<input id="case-contact" value="${v(p?.contactName||customer?.contact)}" placeholder="Navn på kontaktperson"></label>
+          <label>Telefon<input id="case-phone" type="tel" value="${v(p?.phone||customer?.phone)}" placeholder="12 34 56 78"></label>
+          <label>E-mail<input id="case-email" type="email" value="${v(p?.email||customer?.email)}" placeholder="kunde@email.dk"></label>
+        </div></section>
+      </div>
+      <div class="case-form-actions"><button type="button" class="secondary" onclick="closeProjectForm()">Annuller</button><button type="submit" class="primary">${editing?'Gem ændringer':'Opret sag'}</button></div>
+    </form>
+  </div>`;
+  setTimeout(()=>document.getElementById('case-name')?.focus(),50);
+}
+function closeProjectForm(){document.getElementById('modal-root').innerHTML=''}
+function saveProjectForm(e,projectId=''){
+  e.preventDefault();
+  const val=id=>document.getElementById(id)?.value.trim()||'';
+  const name=val('case-name');
+  if(!name)return toast('Skriv et sagsnavn');
+  const contact={customerName:val('case-customer'),contactName:val('case-contact'),phone:val('case-phone'),email:val('case-email')};
+  let p=projectId?state.projects.find(x=>x.id===projectId):null;
+  let customer=p?.customerId?state.customers.find(c=>c.id===p.customerId):null;
+  if(contact.customerName||contact.contactName||contact.phone||contact.email){
+    if(!customer){customer={id:uid('c'),name:contact.customerName||contact.contactName||'Kunde',phone:'',email:'',address:''};state.customers.push(customer)}
+    customer.name=contact.customerName||contact.contactName||customer.name;
+    customer.contact=contact.contactName;
+    customer.phone=contact.phone;
+    customer.email=contact.email;
+    customer.address=[val('case-address'),val('case-postal'),val('case-city')].filter(Boolean).join(', ');
+  }
+  const common={
+    number:val('case-number')||nextCaseNumber(),name,status:val('case-status')||'Tilbud',caseType:val('case-type'),
+    start:val('case-start'),description:val('case-description'),address:val('case-address'),postalCode:val('case-postal'),city:val('case-city'),
+    customerName:contact.customerName,contactName:contact.contactName,phone:contact.phone,email:contact.email,customerId:customer?.id||''
+  };
+  if(p){Object.assign(p,common)}else{
+    p={id:uid('p'),...common,calc:{items:[],labor:[],extras:[]},ks:[],hours:[],schedule:{startDate:common.start||new Date().toISOString().slice(0,10),dayHours:7.4,workStart:'07:00',budgetHours:0,tasks:[]},presentationNotes:{},presentationImages:{}};
+    state.projects.push(p);state.activeProjectId=p.id;
+  }
+  saveState();closeProjectForm();renderAll();go('projects');toast(projectId?'Sag opdateret':'Sag oprettet');
+}
+function newProject(){openProjectForm()}
+window.newProject=newProject;
+window.editProject=openProjectForm;
+
+function renderProjects(){
+  $('#projects-page').innerHTML=`<div class="pagehead"><div><h1>Sager</h1><p>Opret og administrer sager med adresse, sagstype og kontaktoplysninger.</p></div><button class="primary" onclick="newProject()">+ Ny sag</button></div><div class="project-grid">${state.projects.map(p=>{const t=totals(p),cust=p.customerId?state.customers.find(c=>c.id===p.customerId):null,addr=projectAddress(p),contact=p.contactName||cust?.contact||cust?.name||'';return`<article class="project-card project-card-rich"><div class="project-card-top"><span class="status ${statusClass(p.status)}">${h(p.status)}</span><span class="case-type-badge">${h(p.caseType||'Ikke angivet')}</span></div><h3>${h(p.name)}</h3><p class="case-number">${h(p.number)}</p>${addr?`<div class="case-info"><span>⌖</span><div><small>Adresse</small><b>${h(addr)}</b></div></div>`:''}${contact?`<div class="case-info"><span>♙</span><div><small>Kontakt</small><b>${h(contact)}</b>${p.phone||cust?.phone?`<em>${h(p.phone||cust?.phone)}</em>`:''}</div></div>`:''}<div class="cardline"><span>Materialer</span><b>${kr(t.materials)}</b></div><div class="cardline"><span>KS</span><b>${ksStats(p).ok}/${ksStats(p).total}</b></div><div class="project-card-actions"><button class="secondary" onclick="openProjectForm('${p.id}')">Rediger</button><button class="secondary" onclick="state.activeProjectId='${p.id}';saveState(false);renderAll();go('dashboard')">Gør aktiv</button></div></article>`}).join('')}</div>`;
+}
+
 window.addEventListener('keydown',e=>{
   if(document.getElementById('ks-photo-viewer')){
     if(e.key==='Escape')closeKsViewer();
     if(e.key==='ArrowLeft')stepKsPhoto(-1);
     if(e.key==='ArrowRight')stepKsPhoto(1);
   }
+  if(e.key==='Escape'&&document.querySelector('.case-modal'))closeProjectForm();
 });
 
 setTimeout(()=>{
